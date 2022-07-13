@@ -138,6 +138,8 @@ func init() {
 
 	initCmd.Flags().IntVar(&install.Vlog, "vlog", 0, "kubeadm log level")
 
+	initCmd.Flags().StringVar(&install.DockerDataRoot, "docker-data-root", "/var/lib/docker", "docker data-root path")
+
 	// 不像用户暴露
 	// initCmd.Flags().StringVar(&install.CertPath, "cert-path", cert.GetUserHomeDir() + "/.sealos/pki", "cert file path")
 	// initCmd.Flags().StringVar(&install.CertEtcdPath, "cert-etcd-path", cert.GetUserHomeDir() + "/.sealos/pki/etcd", "etcd cert file path")

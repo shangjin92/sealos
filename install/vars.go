@@ -86,6 +86,9 @@ var (
 	AccessKeySecrets string
 	BucketName       string
 	ObjectPath       string
+
+	// DockerDataRoot default value is /var/lib/docker
+	DockerDataRoot string
 )
 
 func vlogToStr() string {
