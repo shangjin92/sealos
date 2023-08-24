@@ -145,6 +145,7 @@ func (s *SealosInstaller) JoinMasters(masters []string) {
 			// enable aggregator-routing for metrics-server
 			SSHConfig.Cmd(s.Masters[0], "cp -rf /root/kube/bin/yq /usr/local/bin/ && chmod +x /usr/local/bin/yq")
 			SSHConfig.Cmd(s.Masters[0], "yq -i '.spec.containers[0].command += \"--enable-aggregator-routing=true\"' /etc/kubernetes/manifests/kube-apiserver.yaml")
+			logger.Info("restart kubelet after enable aggregator-routing, master ip: %s", master)
 			SSHConfig.Cmd(s.Masters[0], "systemctl restart kubelet")
 
 			cleaninstall := `rm -rf /root/kube || :`
