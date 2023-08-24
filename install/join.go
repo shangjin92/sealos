@@ -24,7 +24,7 @@ import (
 	"github.com/fanux/sealos/pkg/logger"
 )
 
-//BuildJoin is
+// BuildJoin is
 func BuildJoin(joinMasters, joinNodes []string) {
 	if len(joinMasters) > 0 {
 		joinMastersFunc(joinMasters)
@@ -54,7 +54,7 @@ func joinMastersFunc(joinMasters []string) {
 	i.lvscare()
 }
 
-//joinNodesFunc is join nodes func
+// joinNodesFunc is join nodes func
 func joinNodesFunc(joinNodes []string) {
 	// 所有node节点
 	nodes := joinNodes
@@ -72,8 +72,8 @@ func joinNodesFunc(joinNodes []string) {
 	NodeIPs = append(NodeIPs, joinNodes...)
 }
 
-//GeneratorToken is
-//这里主要是为了获取CertificateKey
+// GeneratorToken is
+// 这里主要是为了获取CertificateKey
 func (s *SealosInstaller) GeneratorCerts() {
 	cmd := `kubeadm init phase upload-certs --upload-certs` + vlogToStr()
 	output := SSHConfig.CmdToString(s.Masters[0], cmd, "\r\n")
@@ -86,7 +86,7 @@ func (s *SealosInstaller) GeneratorCerts() {
 	decodeOutput(out)
 }
 
-//GeneratorToken is
+// GeneratorToken is
 func (s *SealosInstaller) GeneratorToken() {
 	cmd := `kubeadm token create --print-join-command` + vlogToStr()
 	output := SSHConfig.Cmd(s.Masters[0], cmd)
@@ -114,7 +114,7 @@ func (s *SealosInstaller) sendJoinCPConfig(joinMaster []string) {
 	wg.Wait()
 }
 
-//JoinMasters is
+// JoinMasters is
 func (s *SealosInstaller) JoinMasters(masters []string) {
 	var wg sync.WaitGroup
 	//copy certs & kube-config
@@ -141,6 +141,12 @@ func (s *SealosInstaller) JoinMasters(masters []string) {
 			_ = SSHConfig.CmdAsync(master, cmdHosts)
 			copyk8sConf := `rm -rf .kube/config && mkdir -p /root/.kube && cp /etc/kubernetes/admin.conf /root/.kube/config && chmod 600 /root/.kube/config`
 			_ = SSHConfig.CmdAsync(master, copyk8sConf)
+
+			// enable aggregator-routing for metrics-server
+			SSHConfig.Cmd(s.Masters[0], "cp -rf /root/kube/bin/yq /usr/local/bin/ && chmod +x /usr/local/bin/yq")
+			SSHConfig.Cmd(s.Masters[0], "yq -i '.spec.containers[0].command += \"--enable-aggregator-routing=true\"' /etc/kubernetes/manifests/kube-apiserver.yaml")
+			SSHConfig.Cmd(s.Masters[0], "systemctl restart kubelet")
+
 			cleaninstall := `rm -rf /root/kube || :`
 			_ = SSHConfig.CmdAsync(master, cleaninstall)
 		}(master)
@@ -148,7 +154,7 @@ func (s *SealosInstaller) JoinMasters(masters []string) {
 	wg.Wait()
 }
 
-//JoinNodes is
+// JoinNodes is
 func (s *SealosInstaller) JoinNodes() {
 	var masters string
 	var wg sync.WaitGroup

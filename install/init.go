@@ -31,7 +31,7 @@ import (
 	"github.com/fanux/sealos/pkg/logger"
 )
 
-//BuildInit is
+// BuildInit is
 func BuildInit() {
 	MasterIPs = ParseIPs(MasterIPs)
 	NodeIPs = ParseIPs(NodeIPs)
@@ -86,7 +86,7 @@ func (s *SealosInstaller) getCgroupDriverFromShell(h string) string {
 	return output
 }
 
-//KubeadmConfigInstall is
+// KubeadmConfigInstall is
 func (s *SealosInstaller) KubeadmConfigInstall() {
 	var templateData string
 	CgroupDriver = s.getCgroupDriverFromShell(s.Masters[0])
@@ -183,7 +183,7 @@ func (s *SealosInstaller) CreateKubeconfig() {
 	}
 }
 
-//InstallMaster0 is
+// InstallMaster0 is
 func (s *SealosInstaller) InstallMaster0() {
 	s.SendKubeConfigs([]string{s.Masters[0]})
 	s.sendNewCertAndKey([]string{s.Masters[0]})
@@ -251,9 +251,16 @@ func (s *SealosInstaller) InstallMaster0() {
 	_ = ioutil.WriteFile(configYamlDir, []byte(netyaml), 0755)
 	SSHConfig.Copy(s.Masters[0], configYamlDir, "/tmp/cni.yaml")
 	SSHConfig.Cmd(s.Masters[0], "kubectl apply -f /tmp/cni.yaml")
+
+	// enable aggregator-routing for metrics-server
+	SSHConfig.Cmd(s.Masters[0], "cp -rf /root/kube/bin/yq /usr/local/bin/ && chmod +x /usr/local/bin/yq")
+	SSHConfig.Cmd(s.Masters[0], "yq -i '.spec.containers[0].command += \"--enable-aggregator-routing=true\"' /etc/kubernetes/manifests/kube-apiserver.yaml")
+	SSHConfig.Cmd(s.Masters[0], "systemctl restart kubelet")
+	// install metrics-server
+	SSHConfig.Cmd(s.Masters[0], "kubectl apply -f /root/kube/conf/metrics-server-ha-insecure-tls.yaml")
 }
 
-//SendKubeConfigs
+// SendKubeConfigs
 func (s *SealosInstaller) SendKubeConfigs(masters []string) {
 	s.sendKubeConfigFile(masters, "kubelet.conf")
 	s.sendKubeConfigFile(masters, "admin.conf")
